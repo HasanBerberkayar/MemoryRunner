@@ -1,129 +1,214 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class PlayerBehavior : MonoBehaviour
 {
     public float MoveSpeed = 10f;
     public float RotateSpeed = 75f;
-    private float _vInput;
-    private float _hInput;
-    private Rigidbody _rb;
+    private float vInput;
+    private float hInput;
+    private Rigidbody rb;
 
-    public float JumpVelocity = 5f;
-    private bool _isJumping;
-    public float DistanceToGround = 0.1f;
-    public LayerMask GroundLayer;
-    private CapsuleCollider _col;
+    public float jumpVelocity = 5f;
+    private bool isJumping;
+    public float distanceToGround = 0.1f;
+    public LayerMask groundLayer;
+    private CapsuleCollider col;
     public int maxJump = 2;
     public int jumpCount;
 
-    public GameObject Bullet;
-    public float BulletSpeed = 100f;
-    private bool _isShooting;
+    public GameObject bullet;
+    public float bulletSpeed = 100f;
+    private bool isShooting;
 
-    public GameObject Cam;
-    public float ShoulderOffset = 1f;
-    public float BulletHeight = 0.5f;
+    public GameObject cam;
+    public float shoulderOffset = 1f;
+    public float bulletHeight = 0.5f;
 
-    public float FireRate = 0.3f;
-    private float _fireTimer = 0f;
+    public float fireRate = 0.3f;
+    private float fireTimer = 0f;
 
     public int bulletMax = 10;
     public int bulletRemaining;
     public float reloadTime = 2f;
     public float reloadTimer = 0f;
+    private bool isReloading = false;
 
-    private Animator _anim;
+    private Animator anim;
+    public TMP_Text bulletText;
+
+    private int hidePressAmount = 0;
+    public bool canEnemysSee = true;
+
+    private int maxHealth = 5;
+    private int currentHealth;
+    public TMP_Text healthText;
 
     // Unity Message | 0 references
     void Start()
     {
-        _rb = GetComponent<Rigidbody>();
-        _col = GetComponent<CapsuleCollider>();
-        _anim = GetComponent<Animator>();
+        rb = GetComponent<Rigidbody>();
+        col = GetComponent<CapsuleCollider>();
+        anim = GetComponent<Animator>();
         bulletRemaining = bulletMax;
         jumpCount = maxJump;
+        currentHealth = maxHealth;
     }
 
     // Unity Message | 0 references
     void Update()
     {
-        _vInput = Input.GetAxis("Vertical") * MoveSpeed;
-        _hInput = Input.GetAxis("Horizontal") * RotateSpeed;
-        _isJumping |= Input.GetKeyDown(KeyCode.Space);
-        _isShooting |= Input.GetMouseButton(0);
-
-        bool isWalking = Mathf.Abs(_vInput) > 0.01f;
-        _anim.SetBool("IsWalking", isWalking);
-
-        if (_fireTimer > 0f)
+        if (Input.GetKeyDown(KeyCode.C))
         {
-            _fireTimer -= Time.deltaTime;
+            Hide();
+            hidePressAmount++;
         }
 
-        if (bulletRemaining <= 0 && reloadTimer > 0)
+        vInput = Input.GetAxis("Vertical") * MoveSpeed;
+        hInput = Input.GetAxis("Horizontal") * RotateSpeed;
+        isJumping |= Input.GetKeyDown(KeyCode.Space);
+        isShooting |= Input.GetMouseButton(0);
+
+        bool isWalking = Mathf.Abs(vInput) > 0.01f;
+        if (!canEnemysSee)
+        {
+            isWalking = false;
+        }
+        anim.SetBool("IsWalking", isWalking);
+
+        if (fireTimer > 0f)
+        {
+            fireTimer -= Time.deltaTime;
+        }
+
+        if (Input.GetKeyDown(KeyCode.R) && !isReloading)
+        {
+            isReloading = true;
+        }
+        if ((bulletRemaining <= 0 || isReloading) && reloadTimer > 0)
         {
             reloadTimer -= Time.deltaTime;
+            isReloading = true;
         }
-        else if (bulletRemaining <= 0 && reloadTimer <= 0)
+        else if (reloadTimer <= 0)
         {
             bulletRemaining = bulletMax;
+            reloadTimer = reloadTime;
+            isReloading = false;
+            UpdateBulletText();
+        }
+
+        if (isReloading)
+        {
+            MoveSpeed = 5;
+        }
+        else
+        {
+            MoveSpeed = 10;
         }
     }
 
     // Unity Message | 0 references
     void FixedUpdate()
     {
-        if (IsGrounded())
-        {
-            jumpCount = maxJump;
-        }
-        if (jumpCount > 1 && _isJumping)
-        {
-            _anim.SetTrigger("Jump");
-            _rb.AddForce(Vector3.up * JumpVelocity, ForceMode.Impulse);
-            jumpCount--;
-        }
-        _isJumping = false;
-
-        Vector3 rotation = Vector3.up * _hInput;
-        Quaternion angleRot = Quaternion.Euler(rotation * Time.fixedDeltaTime);
-        _rb.MovePosition(this.transform.position + this.transform.forward * _vInput * Time.fixedDeltaTime);
-        _rb.MoveRotation(_rb.rotation * angleRot);
-
-        if (_isShooting && _fireTimer <= 0f && bulletRemaining > 0)
-        {
-            Vector3 spawnPos;
-
-            if (Cam.GetComponent<CameraBehavior>().isLeftShoulder)
-            {
-                spawnPos = transform.position - transform.right * ShoulderOffset + Vector3.up * BulletHeight;
-            }
-            else
-            {
-                spawnPos = transform.position + transform.right * ShoulderOffset + Vector3.up * BulletHeight;
-            }
-            GameObject newBullet = Instantiate(Bullet, spawnPos, Quaternion.identity);
-
-            Rigidbody bulletRB = newBullet.GetComponent<Rigidbody>();
-            bulletRB.linearVelocity = Cam.transform.forward * BulletSpeed;
-            _fireTimer = FireRate;
-            bulletRemaining = bulletRemaining - 1;
-            if (bulletRemaining == 0)
-            {
-                reloadTimer = reloadTime;
-            }
-        }
-        _isShooting = false;
+        Move();
+        Jump();
+        Shoot();
     }
 
     private bool IsGrounded()
     {
-        Vector3 capsuleBottom = new Vector3(_col.bounds.center.x, _col.bounds.min.y, _col.bounds.center.y);
+        Vector3 capsuleBottom = new Vector3(col.bounds.center.x, col.bounds.min.y, col.bounds.center.z);
 
-        bool grounded = Physics.CheckCapsule(_col.bounds.center, capsuleBottom, DistanceToGround, GroundLayer, QueryTriggerInteraction.Ignore);
+        bool grounded = Physics.CheckCapsule(col.bounds.center, capsuleBottom, distanceToGround, groundLayer, QueryTriggerInteraction.Ignore);
 
         return grounded;
+    }
+
+    private void Move()
+    {
+        Vector3 rotation = Vector3.up * hInput;
+        Quaternion angleRot = Quaternion.Euler(rotation * Time.fixedDeltaTime);
+        rb.MovePosition(this.transform.position + this.transform.forward * vInput * Time.fixedDeltaTime);
+        rb.MoveRotation(rb.rotation * angleRot);
+    }
+
+
+    private void Jump()
+    {
+        if (IsGrounded())
+        {
+            jumpCount = maxJump;
+        }
+        if (jumpCount > 1 && isJumping)
+        {
+            anim.SetTrigger("Jump");
+            rb.AddForce(Vector3.up * jumpVelocity, ForceMode.Impulse);
+            jumpCount--;
+        }
+        isJumping = false;
+    }
+
+
+    private void Shoot()
+    {
+        if (isShooting && fireTimer <= 0f && bulletRemaining > 0)
+        {
+            Vector3 spawnPos;
+
+            if (cam.GetComponent<CameraBehavior>().isLeftShoulder)
+            {
+                spawnPos = transform.position - transform.right * shoulderOffset + Vector3.up * bulletHeight;
+            }
+            else
+            {
+                spawnPos = transform.position + transform.right * shoulderOffset + Vector3.up * bulletHeight;
+            }
+            GameObject newBullet = Instantiate(bullet, spawnPos, Quaternion.identity);
+            Rigidbody bulletRB = newBullet.GetComponent<Rigidbody>();
+            bulletRB.linearVelocity = (cam.transform.forward + Vector3.up * 0.05f) * bulletSpeed;
+            fireTimer = fireRate;
+            bulletRemaining = bulletRemaining - 1;
+            UpdateBulletText();
+        }
+        isShooting = false;
+    }
+
+    private void UpdateBulletText()
+    {
+        bulletText.text = "Bullet: " + bulletRemaining.ToString();
+    }
+
+    private void Hide()
+    {
+        if (hidePressAmount%2 == 0)
+        {
+            canEnemysSee = false;
+            MoveSpeed = MoveSpeed / 2;
+            anim.SetBool("IsHiding", true);
+        }
+        else
+        {
+            canEnemysSee = true;
+            MoveSpeed = MoveSpeed * 2;
+            anim.SetBool("IsHiding", false);
+        }
+    }
+
+    public void TakeDamage()
+    {
+        currentHealth--;
+        healthText.text = "Health: " + currentHealth.ToString();
+
+        if (currentHealth <= 0) {
+            Die();
+        }
+    }
+
+    public void Die()
+    {
+
     }
 }

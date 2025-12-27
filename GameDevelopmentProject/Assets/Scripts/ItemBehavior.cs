@@ -17,7 +17,7 @@ public class ItemBehavior : MonoBehaviour
         {
             Destroy(this.gameObject);
             Debug.Log("Item collected!");
-            GameManager.Items += 1;
+            //GameManager.Items += 1;
         }
     }
 }

@@ -6,9 +6,9 @@ public class EnemyBehavior : MonoBehaviour
     public EnemyType enemyType;
 
     public float patrolSpeed = 1.5f;
-    public float chaseSpeed = 4f;
+    public float chaseSpeed = 8f;
 
-    public float chaseRange = 10f;
+    public float chaseRange = 20f;
     public float attackRange = 1.5f;
 
     public float attackCooldown = 1.2f;
@@ -17,7 +17,7 @@ public class EnemyBehavior : MonoBehaviour
     public int health = 3;
     public int damage = 1;
 
-    public Transform player;
+    public GameObject player;
     public Transform pointA;
     public Transform pointB;
 
@@ -44,7 +44,15 @@ public class EnemyBehavior : MonoBehaviour
 
     void FixedUpdate()
     {
-        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+        float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
+        if(player.GetComponent<PlayerBehavior>().canEnemysSee == false)
+        {
+            chaseRange = 10;
+        }
+        else
+        {
+            chaseRange = 20;
+        }
 
         if (distanceToPlayer <= chaseRange)
         {
@@ -79,7 +87,7 @@ public class EnemyBehavior : MonoBehaviour
 
         if (distance > attackRange)
         {
-            MoveTowards(player.position, chaseSpeed);
+            MoveTowards(player.transform.position, chaseSpeed);
         }
         else
         {
@@ -106,17 +114,17 @@ public class EnemyBehavior : MonoBehaviour
     void StopMovement()
     {
         rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+
+        animator.SetBool("IsRunning", false);
     }
 
     void Attack()
     {
-        if (attackTimer > 0f)
-            return;
-
-        attackTimer = attackCooldown;
-
-        // Player can�n� burada d���r
-        Debug.Log("Enemy attacked player!");
+        if (attackTimer <= 0f)
+        {
+            player.GetComponent<PlayerBehavior>().TakeDamage();
+            attackTimer = attackCooldown;
+        }
     }
 
     void OnTriggerEnter(Collider other)

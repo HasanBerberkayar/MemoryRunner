@@ -1,17 +1,14 @@
 using UnityEngine;
-//1
 using TMPro;
 
 public class GameBehavior : MonoBehaviour
 {
-    //2
+    /*
     public int MaxItems = 4;
-    //3
     public TMP_Text HealthText;
     public TMP_Text ItemText;
     public TMP_Text ProgressText;
 
-    //4
     private void Start()
     {
         ItemText.text += _itemCollected;
@@ -25,10 +22,7 @@ public class GameBehavior : MonoBehaviour
         set
         {
             _itemCollected = value;
-            //Debug.LogFormat("Items: {0}", _itemCollected);
-            //5
             ItemText.text = "Items: " + Items;
-            //6
             if (_itemCollected >= MaxItems)
             {
                 ProgressText.text = "You have found all the items!";
@@ -47,9 +41,50 @@ public class GameBehavior : MonoBehaviour
         set
         {
             _playerHP = value;
-            //7
             HealthText.text = "Health: " + HP;
             Debug.LogFormat("Lives: {0}", _playerHP);
         }
+    }*/
+
+    public float startTime = 180f;
+    public TMP_Text timerText;
+
+    private float timeRemaining;
+    private bool timerRunning = true;
+
+    void Start()
+    {
+        timeRemaining = startTime;
+        UpdateTimerText();
     }
+    void Update()
+    {
+        if (!timerRunning)
+            return;
+
+        if (timeRemaining > 0f)
+        {
+            timeRemaining -= Time.deltaTime;
+            UpdateTimerText();
+        }
+        else
+        {
+            timerRunning = false;
+            OnTimerEnd();
+        }
+    }
+
+    void UpdateTimerText()
+    {
+        int minutes = Mathf.FloorToInt(timeRemaining / 60f);
+        int seconds = Mathf.FloorToInt(timeRemaining % 60f);
+
+        timerText.text = "Remaining Time: " + minutes.ToString() + ":" + seconds.ToString("00");
+    }
+
+    void OnTimerEnd()
+    {
+        Debug.Log("Time's up!");
+    }
+
 }
