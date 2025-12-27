@@ -39,12 +39,12 @@ public class CameraBehavior : MonoBehaviour
             if (isLeftShoulder == true)
             {
                 isLeftShoulder = false;
-                pos.x = -5f;
+                pos.x = -15f;
             }
             else
             {
                 isLeftShoulder = true;
-                pos.x = 5f;
+                pos.x = 15f;
             }
             rt.anchoredPosition = pos;
         }
