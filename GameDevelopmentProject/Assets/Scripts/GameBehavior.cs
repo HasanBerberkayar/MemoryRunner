@@ -1,5 +1,6 @@
-using UnityEngine;
 using TMPro;
+using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameBehavior : MonoBehaviour
 {
@@ -52,9 +53,13 @@ public class GameBehavior : MonoBehaviour
     private float timeRemaining;
     private bool timerRunning = true;
 
+    public GameObject mainMenu;
+    public GameObject howToPlayMenu;
+
     void Start()
     {
         timeRemaining = startTime;
+        Time.timeScale = 0f;
         UpdateTimerText();
     }
     void Update()
@@ -87,4 +92,28 @@ public class GameBehavior : MonoBehaviour
         Debug.Log("Time's up!");
     }
 
+    public void StartGame()
+    {
+        mainMenu.SetActive(false);
+        Time.timeScale = 1f;
+    }
+    public void OpenHowToPlayMenu()
+    {
+        mainMenu.SetActive(false);
+        howToPlayMenu.SetActive(true);
+    }
+    public void BackToMainMenu()
+    {
+        howToPlayMenu.SetActive(false);
+        mainMenu.SetActive(true);
+    }
+    public void QuitGame()
+    {
+        Application.Quit();
+    }
+
+    public void RestartGame()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
 }

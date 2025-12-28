@@ -46,6 +46,8 @@ public class PlayerBehavior : MonoBehaviour
     private int currentHealth;
     public TMP_Text healthText;
 
+    public GameObject dieScreen;
+
     // Unity Message | 0 references
     void Start()
     {
@@ -102,11 +104,25 @@ public class PlayerBehavior : MonoBehaviour
 
         if (isReloading)
         {
-            MoveSpeed = 5;
+            if (canEnemysSee)
+            {
+                MoveSpeed = 5;
+            }
+            else
+            {
+                MoveSpeed = 2.5f;
+            }
         }
         else
         {
-            MoveSpeed = 10;
+            if (canEnemysSee)
+            {
+                MoveSpeed = 10;
+            }
+            else
+            {
+                MoveSpeed = 5f;
+            }
         }
     }
 
@@ -186,13 +202,11 @@ public class PlayerBehavior : MonoBehaviour
         if (hidePressAmount%2 == 0)
         {
             canEnemysSee = false;
-            MoveSpeed = MoveSpeed / 2;
             anim.SetBool("IsHiding", true);
         }
         else
         {
             canEnemysSee = true;
-            MoveSpeed = MoveSpeed * 2;
             anim.SetBool("IsHiding", false);
         }
     }
@@ -209,6 +223,6 @@ public class PlayerBehavior : MonoBehaviour
 
     public void Die()
     {
-
+        dieScreen.SetActive(true);
     }
 }
