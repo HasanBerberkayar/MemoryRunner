@@ -6,6 +6,7 @@ public class NoteItem : MonoBehaviour
     public string noteContent; 
     
     private NoteManager noteManager;
+    public AudioSource pickupSound;
 
     void Start()
     {
@@ -17,8 +18,12 @@ public class NoteItem : MonoBehaviour
         // Eğer oyuncu (Player etiketli obje) çarparsa
         if (other.CompareTag("Player"))
         {
+            AudioSource.PlayClipAtPoint(
+            pickupSound.clip,
+            transform.position
+            );
             noteManager.ShowNote(noteContent);
-            Destroy(gameObject); // Notu yerden kaldırır
+            Destroy(gameObject);
         }
     }
 }
