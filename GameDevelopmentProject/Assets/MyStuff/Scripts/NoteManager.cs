@@ -47,10 +47,6 @@ public class NoteManager : MonoBehaviour
         notePanel.SetActive(true);
         isNoteOpen = true;
         Time.timeScale = 0f; 
-
-        // Mouse imlecini göster
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
     }
 
     public void CloseNote()
@@ -58,10 +54,6 @@ public class NoteManager : MonoBehaviour
         notePanel.SetActive(false);
         isNoteOpen = false;
         Time.timeScale = 1f; 
-
-        // Mouse imlecini gizleme kısmı
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
         
         //Tüm notlar toplanınca burda birşey olabilir
         if(collectedNotes >= totalNotes)
