@@ -38,11 +38,12 @@ public class PlayerBehavior : MonoBehaviour
 
     private Animator anim;
     public TMP_Text bulletText;
+    bool isWalking;
 
     private int hidePressAmount = 0;
     public bool canEnemysSee = true;
 
-    private int maxHealth = 5;
+    private int maxHealth = 10;
     private int currentHealth;
     public TMP_Text healthText;
 
@@ -73,12 +74,25 @@ public class PlayerBehavior : MonoBehaviour
         isJumping |= Input.GetKeyDown(KeyCode.Space);
         isShooting |= Input.GetMouseButton(0);
 
-        bool isWalking = Mathf.Abs(vInput) > 0.01f;
-        if (!canEnemysSee)
+        isWalking = Mathf.Abs(vInput) > 0.01f;
+        if (!isWalking)
         {
-            isWalking = false;
+            anim.SetBool("IsWalking",false);
+            anim.SetBool("IsHiding", false);
         }
-        anim.SetBool("IsWalking", isWalking);
+        else
+        {
+            if (!canEnemysSee)
+            {
+                anim.SetBool("IsHiding", true);
+                anim.SetBool("IsWalking", false);
+            }
+            else
+            {
+                anim.SetBool("IsWalking", true);
+                anim.SetBool("IsHiding", false);
+            }
+        }
 
         if (fireTimer > 0f)
         {
@@ -202,12 +216,10 @@ public class PlayerBehavior : MonoBehaviour
         if (hidePressAmount%2 == 0)
         {
             canEnemysSee = false;
-            anim.SetBool("IsHiding", true);
         }
         else
         {
             canEnemysSee = true;
-            anim.SetBool("IsHiding", false);
         }
     }
 
